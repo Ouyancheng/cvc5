@@ -15,3 +15,4 @@
 
 # Add unit tests.
 cvc5_add_unit_test_white(cnf_stream_white prop)
+cvc5_add_unit_test_white(prop_opt prop)

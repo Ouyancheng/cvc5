@@ -485,6 +485,7 @@ bool Solver::addClause_(vec<Lit>& ps, bool removable, ClauseId& id)
       ps.copyTo(lemmas.last());
       lemmas_removable.push(removable);
     } else {
+      std::cout << "Decision level = " << decisionLevel() << std::endl;
       Assert(decisionLevel() == 0);
 
       // If all false, we're in conflict
