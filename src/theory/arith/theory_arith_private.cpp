@@ -1839,7 +1839,6 @@ bool TheoryArithPrivate::attemptSolveInteger(Theory::Effort effortLevel, bool em
     << " " << effortLevel
     << " " << d_lastContextIntegerAttempted
     << " " << level
-    << " " << hasIntegerModel()
     << endl;
 
   if(d_qflraStatus == Result::UNSAT){ return false; }
@@ -2530,12 +2529,9 @@ std::vector<ConstraintCPVec> TheoryArithPrivate::replayLogRec(ApproximateSimplex
       Assert(d_partialModel.canBeReleased(v));
       if(!d_tableau.isBasic(v)){
         /* if it is not basic make it basic. */
-        ArithVar b = ARITHVAR_SENTINEL;
-        for(Tableau::ColIterator ci = d_tableau.colIterator(v); !ci.atEnd(); ++ci){
-          const Tableau::Entry& e = *ci;
-          b = d_tableau.rowIndexToBasic(e.getRowIndex());
-          break;
-        }
+        auto ci = d_tableau.colIterator(v);
+        Assert(!ci.atEnd());
+        ArithVar b = d_tableau.rowIndexToBasic((*ci).getRowIndex());
         Assert(b != ARITHVAR_SENTINEL);
         DeltaRational cp = d_partialModel.getAssignment(b);
         if(d_partialModel.cmpAssignmentLowerBound(b) < 0){
@@ -3375,8 +3371,7 @@ bool TheoryArithPrivate::postCheck(Theory::Effort effortLevel)
 
   Debug("arith") << "integer? "
        << " conf/split " << emmittedConflictOrSplit
-       << " fulleffort " << Theory::fullEffort(effortLevel)
-       << " hasintmodel " << hasIntegerModel() << endl;
+       << " fulleffort " << Theory::fullEffort(effortLevel) << endl;
 
   if(!emmittedConflictOrSplit && Theory::fullEffort(effortLevel) && !hasIntegerModel()){
     Node possibleConflict = Node::null();
@@ -4785,8 +4780,11 @@ std::pair<bool, Node> TheoryArithPrivate::entailmentCheck(TNode lit, const Arith
   return make_pair(false, Node::null());
 }
 
-bool TheoryArithPrivate::decomposeTerm(Node term, Rational& m, Node& p, Rational& c){
-  Node t = Rewriter::rewrite(term);
+bool TheoryArithPrivate::decomposeTerm(Node t,
+                                       Rational& m,
+                                       Node& p,
+                                       Rational& c)
+{
   if(!Polynomial::isMember(t)){
     return false;
   }
@@ -4882,12 +4880,13 @@ bool TheoryArithPrivate::decomposeLiteral(Node lit, Kind& k, int& dir, Rational&
   // left : lm*( lp ) + lc
   // right: rm*( rp ) + rc
   Rational lc, rc;
-  bool success = decomposeTerm(left, lm, lp, lc);
+  bool success = decomposeTerm(rewrite(left), lm, lp, lc);
   if(!success){ return false; }
-  success = decomposeTerm(right, rm, rp, rc);
+  success = decomposeTerm(rewrite(right), rm, rp, rc);
   if(!success){ return false; }
 
-  Node diff = Rewriter::rewrite(NodeManager::currentNM()->mkNode(kind::MINUS, left, right));
+  Node diff =
+      rewrite(NodeManager::currentNM()->mkNode(kind::MINUS, left, right));
   Rational dc;
   success = decomposeTerm(diff, dm, dp, dc);
   Assert(success);
