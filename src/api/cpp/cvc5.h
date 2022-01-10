@@ -574,13 +574,6 @@ class CVC5_EXPORT Sort
   bool isSubsortOf(const Sort& s) const;
 
   /**
-   * Is this sort comparable to the given sort (i.e., do they share
-   * a common ancestor in the subsort tree)?
-   * @return true if this sort is comparable to s
-   */
-  bool isComparableTo(const Sort& s) const;
-
-  /**
    * @return the underlying datatype of a datatype sort
    */
   Datatype getDatatype() const;
@@ -2310,17 +2303,6 @@ class CVC5_EXPORT Datatype
    * @return true if this datatype is well-founded
    */
   bool isWellFounded() const;
-
-  /**
-   * Does this datatype have nested recursion? This method returns false if a
-   * value of this datatype includes a subterm of its type that is nested
-   * beneath a non-datatype type constructor. For example, a datatype
-   * T containing a constructor having a selector with codomain type (Set T)
-   * has nested recursion.
-   *
-   * @return true if this datatype has nested recursion
-   */
-  bool hasNestedRecursion() const;
 
   /**
    * @return true if this Datatype is a null object

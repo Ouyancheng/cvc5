@@ -304,6 +304,7 @@ const static std::unordered_map<Kind, cvc5::Kind> s_kinds{
     {BAG_DIFFERENCE_REMOVE, cvc5::Kind::BAG_DIFFERENCE_REMOVE},
     {BAG_SUBBAG, cvc5::Kind::BAG_SUBBAG},
     {BAG_COUNT, cvc5::Kind::BAG_COUNT},
+    {BAG_MEMBER, cvc5::Kind::BAG_MEMBER},
     {BAG_DUPLICATE_REMOVAL, cvc5::Kind::BAG_DUPLICATE_REMOVAL},
     {BAG_MAKE, cvc5::Kind::BAG_MAKE},
     {BAG_EMPTY, cvc5::Kind::BAG_EMPTY},
@@ -616,6 +617,7 @@ const static std::unordered_map<cvc5::Kind, Kind, cvc5::kind::KindHashFunction>
         {cvc5::Kind::BAG_DIFFERENCE_REMOVE, BAG_DIFFERENCE_REMOVE},
         {cvc5::Kind::BAG_SUBBAG, BAG_SUBBAG},
         {cvc5::Kind::BAG_COUNT, BAG_COUNT},
+        {cvc5::Kind::BAG_MEMBER, BAG_MEMBER},
         {cvc5::Kind::BAG_DUPLICATE_REMOVAL, BAG_DUPLICATE_REMOVAL},
         {cvc5::Kind::BAG_MAKE, BAG_MAKE},
         {cvc5::Kind::BAG_EMPTY, BAG_EMPTY},
@@ -1389,16 +1391,6 @@ bool Sort::isSubsortOf(const Sort& s) const
   CVC5_API_TRY_CATCH_END;
 }
 
-bool Sort::isComparableTo(const Sort& s) const
-{
-  CVC5_API_TRY_CATCH_BEGIN;
-  CVC5_API_ARG_CHECK_SOLVER("sort", s);
-  //////// all checks before this line
-  return d_type->isComparableTo(*s.d_type);
-  ////////
-  CVC5_API_TRY_CATCH_END;
-}
-
 Datatype Sort::getDatatype() const
 {
   CVC5_API_TRY_CATCH_BEGIN;
@@ -1468,10 +1460,6 @@ std::string Sort::toString() const
 {
   CVC5_API_TRY_CATCH_BEGIN;
   //////// all checks before this line
-  if (d_solver != nullptr)
-  {
-    return d_type->toString();
-  }
   return d_type->toString();
   ////////
   CVC5_API_TRY_CATCH_END;
@@ -2485,8 +2473,8 @@ Term Term::substitute(const Term& term, const Term& replacement) const
   CVC5_API_CHECK_NOT_NULL;
   CVC5_API_CHECK_TERM(term);
   CVC5_API_CHECK_TERM(replacement);
-  CVC5_API_CHECK(term.getSort().isComparableTo(replacement.getSort()))
-      << "Expecting terms of comparable sort in substitute";
+  CVC5_API_CHECK(term.getSort() == replacement.getSort())
+      << "Expecting terms of the same sort in substitute";
   //////// all checks before this line
   return Term(
       d_solver,
@@ -2502,7 +2490,7 @@ Term Term::substitute(const std::vector<Term>& terms,
   CVC5_API_CHECK_NOT_NULL;
   CVC5_API_CHECK(terms.size() == replacements.size())
       << "Expecting vectors of the same arity in substitute";
-  CVC5_API_TERM_CHECK_TERMS_WITH_TERMS_COMPARABLE_TO(terms, replacements);
+  CVC5_API_TERM_CHECK_TERMS_WITH_TERMS_SORT_EQUAL_TO(terms, replacements);
   //////// all checks before this line
   std::vector<Node> nodes = Term::termVectorToNodes(terms);
   std::vector<Node> nodeReplacements = Term::termVectorToNodes(replacements);
@@ -2683,10 +2671,6 @@ std::string Term::toString() const
 {
   CVC5_API_TRY_CATCH_BEGIN;
   //////// all checks before this line
-  if (d_solver != nullptr)
-  {
-    return d_node->toString();
-  }
   return d_node->toString();
   ////////
   CVC5_API_TRY_CATCH_END;
@@ -4199,6 +4183,8 @@ bool Datatype::isFinite() const
 {
   CVC5_API_TRY_CATCH_BEGIN;
   CVC5_API_CHECK_NOT_NULL;
+  CVC5_API_CHECK(!d_dtype->isParametric())
+      << "Invalid call to 'isFinite()', expected non-parametric Datatype";
   //////// all checks before this line
   // we assume that finite model finding is disabled by passing false as the
   // second argument
@@ -4213,15 +4199,6 @@ bool Datatype::isWellFounded() const
   CVC5_API_CHECK_NOT_NULL;
   //////// all checks before this line
   return d_dtype->isWellFounded();
-  ////////
-  CVC5_API_TRY_CATCH_END;
-}
-bool Datatype::hasNestedRecursion() const
-{
-  CVC5_API_TRY_CATCH_BEGIN;
-  CVC5_API_CHECK_NOT_NULL;
-  //////// all checks before this line
-  return d_dtype->hasNestedRecursion();
   ////////
   CVC5_API_TRY_CATCH_END;
 }
@@ -5051,7 +5028,7 @@ NodeManager* Solver::getNodeManager(void) const { return d_nodeMgr; }
 
 void Solver::increment_term_stats(Kind kind) const
 {
-  if constexpr (Configuration::isStatisticsBuild())
+  if constexpr (configuration::isStatisticsBuild())
   {
     d_stats->d_terms << kind;
   }
@@ -5059,7 +5036,7 @@ void Solver::increment_term_stats(Kind kind) const
 
 void Solver::increment_vars_consts_stats(const Sort& sort, bool is_var) const
 {
-  if constexpr (Configuration::isStatisticsBuild())
+  if constexpr (configuration::isStatisticsBuild())
   {
     const TypeNode tn = sort.getTypeNode();
     TypeConstant tc = tn.getKind() == cvc5::kind::TYPE_CONSTANT
@@ -5478,7 +5455,7 @@ bool Solver::isValidInteger(const std::string& s) const
 
 void Solver::resetStatistics()
 {
-  if constexpr (Configuration::isStatisticsBuild())
+  if constexpr (configuration::isStatisticsBuild())
   {
     d_stats.reset(new APIStatistics{
         d_slv->getStatisticsRegistry().registerHistogram<TypeConstant>(
@@ -7479,7 +7456,7 @@ Term Solver::getQuantifierElimination(const Term& q) const
   CVC5_API_TRY_CATCH_BEGIN;
   CVC5_API_SOLVER_CHECK_TERM(q);
   //////// all checks before this line
-  return Term(this, d_slv->getQuantifierElimination(q.getNode(), true, true));
+  return Term(this, d_slv->getQuantifierElimination(q.getNode(), true));
   ////////
   CVC5_API_TRY_CATCH_END;
 }
@@ -7489,7 +7466,7 @@ Term Solver::getQuantifierEliminationDisjunct(const Term& q) const
   CVC5_API_TRY_CATCH_BEGIN;
   CVC5_API_SOLVER_CHECK_TERM(q);
   //////// all checks before this line
-  return Term(this, d_slv->getQuantifierElimination(q.getNode(), false, true));
+  return Term(this, d_slv->getQuantifierElimination(q.getNode(), false));
   ////////
   CVC5_API_TRY_CATCH_END;
 }
