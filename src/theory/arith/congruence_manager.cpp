@@ -302,7 +302,7 @@ void ArithCongruenceManager::watchedVariableCannotBeZero(ConstraintCP c){
   if (TraceIsOn("arith::cong::notzero"))
   {
     Trace("arith::cong::notzero") << "  original proof ";
-    pf->printDebug(Trace("arith::cong::notzero"));
+    if (pf) pf->printDebug(Trace("arith::cong::notzero"));
     Trace("arith::cong::notzero") << std::endl;
   }
   Node reason = mkAndFromBuilder(nb);
