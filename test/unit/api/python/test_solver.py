@@ -300,10 +300,10 @@ def test_mk_unresolved_sort(solver):
 
 
 def test_mk_sort_constructor_sort(solver):
-    solver.mkSortConstructorSort("s", 2)
-    solver.mkSortConstructorSort("", 2)
+    solver.mkUninterpretedSortConstructorSort("s", 2)
+    solver.mkUninterpretedSortConstructorSort("", 2)
     with pytest.raises(RuntimeError):
-        solver.mkSortConstructorSort("", 0)
+        solver.mkUninterpretedSortConstructorSort("", 0)
 
 
 def test_mk_tuple_sort(solver):
@@ -520,7 +520,7 @@ def test_mk_op(solver):
         solver.mkOp(Kind.Divisible, 1, 2)
 
     args = [1, 2, 2]
-    solver.mkOp(Kind.TupleProject, args)
+    solver.mkOp(Kind.TupleProject, *args)
 
 
 def test_mk_pi(solver):
@@ -1915,6 +1915,7 @@ def test_mk_sygus_grammar(solver):
 
 
 def test_synth_inv(solver):
+    solver.setOption("sygus", "true")
     boolean = solver.getBooleanSort()
     integer = solver.getIntegerSort()
 
@@ -1941,6 +1942,7 @@ def test_synth_inv(solver):
 
 
 def test_add_sygus_constraint(solver):
+    solver.setOption("sygus", "true")
     nullTerm = cvc5.Term(solver)
     boolTerm = solver.mkBoolean(True)
     intTerm = solver.mkInteger(1)
@@ -1957,6 +1959,7 @@ def test_add_sygus_constraint(solver):
 
 
 def test_add_sygus_inv_constraint(solver):
+    solver.setOption("sygus", "true")
     boolean = solver.getBooleanSort()
     real = solver.getRealSort()
 
@@ -2008,6 +2011,7 @@ def test_add_sygus_inv_constraint(solver):
     with pytest.raises(RuntimeError):
         solver.addSygusInvConstraint(inv, pre, trans, trans)
     slv = cvc5.Solver()
+    slv.setOption("sygus", "true")
     boolean2 = slv.getBooleanSort()
     real2 = slv.getRealSort()
     inv22 = slv.declareFun("inv", [real2], boolean2)
@@ -2025,8 +2029,14 @@ def test_add_sygus_inv_constraint(solver):
         slv.addSygusInvConstraint(inv22, pre22, trans22, post)
 
 
+def test_check_synth(solver):
+    with pytest.raises(RuntimeError):
+        solver.checkSynth()
+    solver.setOption("sygus", "true")
+    solver.checkSynth()
+
 def test_get_synth_solution(solver):
-    solver.setOption("lang", "sygus2")
+    solver.setOption("sygus", "true")
     solver.setOption("incremental", "false")
 
     nullTerm = cvc5.Term(solver)
@@ -2036,7 +2046,8 @@ def test_get_synth_solution(solver):
     with pytest.raises(RuntimeError):
         solver.getSynthSolution(f)
 
-    solver.checkSynth()
+    res = solver.checkSynth()
+    assert res.hasSolution()
 
     solver.getSynthSolution(f)
     solver.getSynthSolution(f)
@@ -2051,18 +2062,20 @@ def test_get_synth_solution(solver):
         slv.getSynthSolution(f)
 
 def test_check_synth_next(solver):
-    solver.setOption("lang", "sygus2")
+    solver.setOption("sygus", "true")
     solver.setOption("incremental", "true")
     f = solver.synthFun("f", [], solver.getBooleanSort())
 
-    solver.checkSynth()
+    res = solver.checkSynth()
+    assert res.hasSolution()
     solver.getSynthSolutions([f])
 
-    solver.checkSynthNext()
+    res = solver.checkSynthNext()
+    assert res.hasSolution()
     solver.getSynthSolutions([f])
 
 def test_check_synth_next2(solver):
-    solver.setOption("lang", "sygus2")
+    solver.setOption("sygus", "true")
     solver.setOption("incremental", "false")
     f = solver.synthFun("f", [], solver.getBooleanSort())
 
@@ -2071,7 +2084,7 @@ def test_check_synth_next2(solver):
         solver.checkSynthNext()
 
 def test_check_synth_next3(solver):
-    solver.setOption("lang", "sygus2")
+    solver.setOption("sygus", "true")
     solver.setOption("incremental", "true")
     f = solver.synthFun("f", [], solver.getBooleanSort())
     with pytest.raises(RuntimeError):
@@ -2134,7 +2147,7 @@ def test_get_abduct_next(solver):
 
 def test_get_interpolant(solver):
     solver.setLogic("QF_LIA")
-    solver.setOption("produce-interpols", "default")
+    solver.setOption("produce-interpols", "true")
     solver.setOption("incremental", "false")
 
     intSort = solver.getIntegerSort()
@@ -2155,7 +2168,7 @@ def test_get_interpolant(solver):
 
 def test_get_interpolant_next(solver):
     solver.setLogic("QF_LIA")
-    solver.setOption("produce-interpols", "default")
+    solver.setOption("produce-interpols", "true")
     solver.setOption("incremental", "true")
 
     intSort = solver.getIntegerSort()
@@ -2245,7 +2258,7 @@ def test_get_model_domain_elements(solver):
 
 
 def test_get_synth_solutions(solver):
-    solver.setOption("lang", "sygus2")
+    solver.setOption("sygus", "true")
     solver.setOption("incremental", "false")
 
     nullTerm = cvc5.Term(solver)
@@ -2458,24 +2471,27 @@ def test_issue7000(solver):
 
 
 def test_mk_sygus_var(solver):
+    solver.setOption("sygus", "true")
     boolSort = solver.getBooleanSort()
     intSort = solver.getIntegerSort()
     funSort = solver.mkFunctionSort(intSort, boolSort)
 
-    solver.mkSygusVar(boolSort)
-    solver.mkSygusVar(funSort)
-    solver.mkSygusVar(boolSort, "b")
-    solver.mkSygusVar(funSort, "")
+    solver.declareSygusVar(boolSort)
+    solver.declareSygusVar(funSort)
+    solver.declareSygusVar(boolSort, "b")
+    solver.declareSygusVar(funSort, "")
     with pytest.raises(RuntimeError):
-        solver.mkSygusVar(cvc5.Sort(solver))
+        solver.declareSygusVar(cvc5.Sort(solver))
     with pytest.raises(RuntimeError):
-        solver.mkSygusVar(solver.getNullSort(), "a")
+        solver.declareSygusVar(solver.getNullSort(), "a")
     slv = cvc5.Solver()
+    solver.setOption("sygus", "true")
     with pytest.raises(RuntimeError):
-        slv.mkSygusVar(boolSort)
+        slv.declareSygusVar(boolSort)
 
 
 def test_synth_fun(solver):
+    solver.setOption("sygus", "true")
     null = solver.getNullSort()
     boolean = solver.getBooleanSort()
     integer = solver.getIntegerSort()
@@ -2503,6 +2519,7 @@ def test_synth_fun(solver):
     with pytest.raises(RuntimeError):
         solver.synthFun("f6", [x], boolean, g2)
     slv = cvc5.Solver()
+    slv.setOption("sygus", "true")
     x2 = slv.mkVar(slv.getBooleanSort())
     slv.synthFun("f1", [x2], slv.getBooleanSort())
     with pytest.raises(RuntimeError):
@@ -2531,22 +2548,22 @@ def test_tuple_project(solver):
     indices5 = [4]
     indices6 = [0, 4]
 
-    solver.mkTerm(solver.mkOp(Kind.TupleProject, indices1), tuple)
+    solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices1), tuple)
 
-    solver.mkTerm(solver.mkOp(Kind.TupleProject, indices2), tuple)
+    solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices2), tuple)
 
-    solver.mkTerm(solver.mkOp(Kind.TupleProject, indices3), tuple)
+    solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices3), tuple)
 
-    solver.mkTerm(solver.mkOp(Kind.TupleProject, indices4), tuple)
+    solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices4), tuple)
 
     with pytest.raises(RuntimeError):
-        solver.mkTerm(solver.mkOp(Kind.TupleProject, indices5), tuple)
+        solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices5), tuple)
     with pytest.raises(RuntimeError):
-        solver.mkTerm(solver.mkOp(Kind.TupleProject, indices6), tuple)
+        solver.mkTerm(solver.mkOp(Kind.TupleProject, *indices6), tuple)
 
     indices = [0, 3, 2, 0, 1, 2]
 
-    op = solver.mkOp(Kind.TupleProject, indices)
+    op = solver.mkOp(Kind.TupleProject, *indices)
     projection = solver.mkTerm(op, tuple)
 
     datatype = tuple.getSort().getDatatype()
