@@ -37,14 +37,17 @@ void test(Solver& slv, Sort& consListSort)
   // APPLY_CONSTRUCTOR, even though it has no arguments.
   Term t = slv.mkTerm(
       APPLY_CONSTRUCTOR,
-      {consList.getConstructorTerm("cons"),
+      {consList.getConstructor("cons").getConstructorTerm(),
        slv.mkInteger(0),
-       slv.mkTerm(APPLY_CONSTRUCTOR, {consList.getConstructorTerm("nil")})});
+       slv.mkTerm(APPLY_CONSTRUCTOR,
+                  {consList.getConstructor("nil").getConstructorTerm()})});
 
   std::cout << "t is " << t << std::endl
             << "sort of cons is "
-            << consList.getConstructorTerm("cons").getSort() << std::endl
-            << "sort of nil is " << consList.getConstructorTerm("nil").getSort()
+            << consList.getConstructor("cons").getConstructorTerm().getSort()
+            << std::endl
+            << "sort of nil is "
+            << consList.getConstructor("nil").getConstructorTerm().getSort()
             << std::endl;
 
   // t2 = head(cons 0 nil), and of course this can be evaluated
@@ -53,7 +56,8 @@ void test(Solver& slv, Sort& consListSort)
   // consList["cons"]) in order to get the "head" selector symbol
   // to apply.
   Term t2 =
-      slv.mkTerm(APPLY_SELECTOR, {consList["cons"].getSelectorTerm("head"), t});
+      slv.mkTerm(APPLY_SELECTOR,
+                 {consList["cons"].getSelector("head").getSelectorTerm(), t});
 
   std::cout << "t2 is " << t2 << std::endl
             << "simplify(t2) is " << slv.simplify(t2) << std::endl
@@ -128,13 +132,15 @@ void test(Solver& slv, Sort& consListSort)
   Term a = slv.mkConst(paramConsIntListSort, "a");
   std::cout << "term " << a << " is of sort " << a.getSort() << std::endl;
 
-  Term head_a = slv.mkTerm(APPLY_SELECTOR,
-                           {paramConsList["cons"].getSelectorTerm("head"), a});
-  std::cout << "head_a is " << head_a << " of sort " << head_a.getSort()
-            << std::endl
-            << "sort of cons is "
-            << paramConsList.getConstructorTerm("cons").getSort() << std::endl
-            << std::endl;
+  Term head_a = slv.mkTerm(
+      APPLY_SELECTOR,
+      {paramConsList["cons"].getSelector("head").getSelectorTerm(), a});
+  std::cout
+      << "head_a is " << head_a << " of sort " << head_a.getSort() << std::endl
+      << "sort of cons is "
+      << paramConsList.getConstructor("cons").getConstructorTerm().getSort()
+      << std::endl
+      << std::endl;
 
   Term assertion = slv.mkTerm(GT, {head_a, slv.mkInteger(50)});
   std::cout << "Assert " << assertion << std::endl;

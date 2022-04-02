@@ -13,7 +13,7 @@
  * An example of using inductive datatypes in cvc5.
  */
 
-import io.github.cvc5.api.*;
+import io.github.cvc5.*;
 import java.util.Iterator;
 
 public class Datatypes
@@ -35,21 +35,22 @@ public class Datatypes
     // "nil" is a constructor too, so it needs to be applied with
     // APPLY_CONSTRUCTOR, even though it has no arguments.
     Term t = slv.mkTerm(Kind.APPLY_CONSTRUCTOR,
-        consList.getConstructorTerm("cons"),
+        consList.getConstructor("cons").getConstructorTerm(),
         slv.mkInteger(0),
-        slv.mkTerm(Kind.APPLY_CONSTRUCTOR, consList.getConstructorTerm("nil")));
+        slv.mkTerm(Kind.APPLY_CONSTRUCTOR, consList.getConstructor("nil").getConstructorTerm()));
 
     System.out.println("t is " + t + "\n"
-        + "sort of cons is " + consList.getConstructorTerm("cons").getSort() + "\n"
-        + "sort of nil is " + consList.getConstructorTerm("nil").getSort());
+        + "sort of cons is " + consList.getConstructor("cons").getConstructorTerm().getSort() + "\n"
+        + "sort of nil is " + consList.getConstructor("nil").getConstructorTerm().getSort());
 
     // t2 = head(cons 0 nil), and of course this can be evaluated
     //
     // Here we first get the DatatypeConstructor for cons (with
     // consList["cons"]) in order to get the "head" selector symbol
     // to apply.
-    Term t2 =
-        slv.mkTerm(Kind.APPLY_SELECTOR, consList.getConstructor("cons").getSelectorTerm("head"), t);
+    Term t2 = slv.mkTerm(Kind.APPLY_SELECTOR,
+        consList.getConstructor("cons").getSelector("head").getSelectorTerm(),
+        t);
 
     System.out.println("t2 is " + t2 + "\n"
         + "simplify(t2) is " + slv.simplify(t2) + "\n");
@@ -123,10 +124,12 @@ public class Datatypes
     Term a = slv.mkConst(paramConsIntListSort, "a");
     System.out.println("term " + a + " is of sort " + a.getSort());
 
-    Term head_a = slv.mkTerm(
-        Kind.APPLY_SELECTOR, paramConsList.getConstructor("cons").getSelectorTerm("head"), a);
+    Term head_a = slv.mkTerm(Kind.APPLY_SELECTOR,
+        paramConsList.getConstructor("cons").getSelector("head").getSelectorTerm(),
+        a);
     System.out.println("head_a is " + head_a + " of sort " + head_a.getSort() + "\n"
-        + "sort of cons is " + paramConsList.getConstructorTerm("cons").getSort() + "\n");
+        + "sort of cons is " + paramConsList.getConstructor("cons").getConstructorTerm().getSort()
+        + "\n");
     Term assertion = slv.mkTerm(Kind.GT, head_a, slv.mkInteger(50));
     System.out.println("Assert " + assertion);
     slv.assertFormula(assertion);
