@@ -1913,7 +1913,11 @@ class CVC5_EXPORT DatatypeDecl
   /** Get the number of constructors (so far) for this Datatype declaration. */
   size_t getNumConstructors() const;
 
-  /** Is this Datatype declaration parametric? */
+  /**
+   * Is this Datatype declaration parametric?
+   *
+   * @warning This method is experimental and may change in future versions.
+   */
   bool isParametric() const;
 
   /**
@@ -2017,7 +2021,7 @@ class CVC5_EXPORT DatatypeSelector
    * Get the selector operator of this datatype selector.
    * @return the selector term
    */
-  Term getSelectorTerm() const;
+  Term getTerm() const;
 
   /**
    * Get the updater operator of this datatype selector.
@@ -2092,7 +2096,7 @@ class CVC5_EXPORT DatatypeConstructor
    * Get the constructor operator of this datatype constructor.
    * @return the constructor term
    */
-  Term getConstructorTerm() const;
+  Term getTerm() const;
 
   /**
    * Get the constructor operator of this datatype constructor whose return
@@ -3744,18 +3748,9 @@ class CVC5_EXPORT Solver
   /**
    * Create a datatype declaration.
    * Create sorts parameter with Solver::mkParamSort().
-   * @param name the name of the datatype
-   * @param param the sort parameter
-   * @param isCoDatatype true if a codatatype is to be constructed
-   * @return the DatatypeDecl
-   */
-  DatatypeDecl mkDatatypeDecl(const std::string& name,
-                              const Sort& param,
-                              bool isCoDatatype = false);
-
-  /**
-   * Create a datatype declaration.
-   * Create sorts parameter with Solver::mkParamSort().
+   *
+   * @warning This method is experimental and may change in future versions.
+   *
    * @param name the name of the datatype
    * @param params a list of sort parameters
    * @param isCoDatatype true if a codatatype is to be constructed
@@ -4686,8 +4681,8 @@ class CVC5_EXPORT Solver
    * @param ntSymbols the pre-declaration of the non-terminal symbols
    * @return the grammar
    */
-  Grammar mkSygusGrammar(const std::vector<Term>& boundVars,
-                         const std::vector<Term>& ntSymbols) const;
+  Grammar mkGrammar(const std::vector<Term>& boundVars,
+                    const std::vector<Term>& ntSymbols) const;
 
   /**
    * Synthesize n-ary function.
