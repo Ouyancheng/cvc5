@@ -19,6 +19,7 @@
 #include "context/context.h"
 #include "expr/node.h"
 #include "options/base_options.h"
+#include "options/printer_options.h"
 #include "options/quantifiers_options.h"
 #include "options/smt_options.h"
 #include "options/strings_options.h"
@@ -130,11 +131,6 @@ const Options& Env::getOriginalOptions() const { return *d_originalOptions; }
 ResourceManager* Env::getResourceManager() const
 {
   return d_resourceManager.get();
-}
-
-const Printer& Env::getPrinter()
-{
-  return *Printer::getPrinter(d_options.base.outputLanguage);
 }
 
 bool Env::isOutputOn(OutputTag tag) const
@@ -254,6 +250,28 @@ theory::TheoryId Env::theoryOf(TNode node) const
 {
   return theory::Theory::theoryOf(
       node, d_options.theory.theoryOfMode, d_uninterpretedSortOwner);
+}
+
+bool Env::hasSepHeap() const { return !d_sepLocType.isNull(); }
+
+bool Env::getSepHeapTypes(TypeNode& locType, TypeNode& dataType) const
+{
+  if (!hasSepHeap())
+  {
+    return false;
+  }
+  locType = d_sepLocType;
+  dataType = d_sepDataType;
+  return true;
+}
+
+void Env::declareSepHeap(TypeNode locT, TypeNode dataT)
+{
+  Assert(!locT.isNull());
+  Assert(!dataT.isNull());
+  // remember the types we have set
+  d_sepLocType = locT;
+  d_sepDataType = dataT;
 }
 
 }  // namespace cvc5::internal

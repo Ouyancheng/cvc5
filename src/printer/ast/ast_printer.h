@@ -33,10 +33,7 @@ class AstPrinter : public cvc5::internal::Printer
 {
  public:
   using cvc5::internal::Printer::toStream;
-  void toStream(std::ostream& out,
-                TNode n,
-                int toDepth,
-                size_t dag) const override;
+  void toStream(std::ostream& out, TNode n) const override;
   void toStream(std::ostream& out, const cvc5::CommandStatus* s) const override;
   void toStream(std::ostream& out, const smt::Model& m) const override;
 
@@ -52,10 +49,10 @@ class AstPrinter : public cvc5::internal::Printer
   void toStreamCmdAssert(std::ostream& out, Node n) const override;
 
   /** Print push command */
-  void toStreamCmdPush(std::ostream& out) const override;
+  void toStreamCmdPush(std::ostream& out, uint32_t nscopes) const override;
 
   /** Print pop command */
-  void toStreamCmdPop(std::ostream& out) const override;
+  void toStreamCmdPop(std::ostream& out, uint32_t nscopes) const override;
 
   /** Print declare-fun command */
   void toStreamCmdDeclareFunction(std::ostream& out,
