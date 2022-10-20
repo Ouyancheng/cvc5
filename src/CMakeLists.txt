@@ -687,6 +687,8 @@ libcvc5_add_sources(
   theory/evaluator.h
   theory/ext_theory.cpp
   theory/ext_theory.h
+  theory/ff/groebner.cpp
+  theory/ff/groebner.h
   theory/ff/core.cpp
   theory/ff/core.h
   theory/ff/model.cpp
@@ -695,6 +697,8 @@ libcvc5_add_sources(
   theory/ff/roots.h
   theory/ff/stats.cpp
   theory/ff/stats.h
+  theory/ff/sub_theory.cpp
+  theory/ff/sub_theory.h
   theory/ff/theory_ff.cpp
   theory/ff/theory_ff.h
   theory/ff/theory_ff_rewriter.cpp
@@ -1243,6 +1247,7 @@ set(options_toml_files
   options/datatypes_options.toml
   options/decision_options.toml
   options/expr_options.toml
+  options/ff_options.toml
   options/fp_options.toml
   options/main_options.toml
   options/parallel_options.toml
